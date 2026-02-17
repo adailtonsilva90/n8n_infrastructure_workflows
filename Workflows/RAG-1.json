@@ -1,0 +1,339 @@
+{
+  "name": "RAG-1",
+  "nodes": [
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://ollama:11434/api/embeddings",
+        "options": {
+          "bodyContentType": "json"
+        },
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "model",
+              "value": "nomic-embed-text"
+            },
+            {
+              "name": "prompt",
+              "value": "={{$json.content}}"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "name": "Embed Chunks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -208
+      ],
+      "id": "be49478c-1abc-4f90-9c8c-9c0f4c2658f3"
+    },
+    {
+      "parameters": {
+        "additionalFields": {}
+      },
+      "name": "Save Vector",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        -224
+      ],
+      "id": "b6d35aca-9162-4c94-ade1-a3cd63e0938e"
+    },
+    {
+      "parameters": {
+        "path": "chat",
+        "options": {}
+      },
+      "name": "Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        304
+      ],
+      "id": "610f24b1-60c5-4228-ac3a-2122b3e1fae6",
+      "webhookId": "7cbe0275-755b-4d3d-aff6-ba4714e836ba"
+    },
+    {
+      "parameters": {
+        "url": "http://ollama:11434/api/embeddings",
+        "jsonParameters": true,
+        "options": {}
+      },
+      "name": "Embed Question",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        176,
+        304
+      ],
+      "id": "bc83cd6a-c670-41e3-ad64-349ed60b2da9"
+    },
+    {
+      "parameters": {
+        "additionalFields": {}
+      },
+      "name": "Search Vectors",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        368,
+        304
+      ],
+      "id": "f219ebd5-c88d-48c4-922c-997c8fdafd9b"
+    },
+    {
+      "parameters": {
+        "functionCode": "const context = items.map(i => i.json.content).join(\"\\n\\n\");\nreturn [{ json: { context, question: $node[\"Chat Webhook\"].json.question } }];"
+      },
+      "name": "Build Context",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        576,
+        304
+      ],
+      "id": "17e37e6d-430e-449e-87a8-1601273d9ee9"
+    },
+    {
+      "parameters": {
+        "url": "http://ollama:11434/api/generate",
+        "jsonParameters": true,
+        "options": {}
+      },
+      "name": "LLM Answer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        768,
+        304
+      ],
+      "id": "30c904e6-8c5c-4db8-8675-cb8bf02925fb"
+    },
+    {
+      "parameters": {
+        "content": "TESTE CHAT",
+        "height": 464,
+        "width": 1232
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        112
+      ],
+      "id": "2c922d27-a767-4e1e-a243-40d5fcc4d849",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "RAG\n",
+        "height": 96,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        -304
+      ],
+      "id": "8c208483-6d47-4b28-b2e1-312811fbbfe2",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "upload",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        -208
+      ],
+      "id": "cac84ff7-774e-4fc9-968b-f98e77b80e06",
+      "name": "Webhook",
+      "webhookId": "16fb9e87-5ec1-4dde-8012-5e809c1c9712"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        128,
+        -208
+      ],
+      "id": "33a76b3d-e4f1-4eef-9608-b10fb920e444",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e6bd638c-66f7-4a9f-aeee-5689cd915cb1",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        -208
+      ],
+      "id": "9e952534-8f7c-4ba3-be9a-47cbf267206a",
+      "name": "SET \"TEXT\" VARIABLE"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.text;\n\nconst chunkSize = 800;\nconst overlap = 150;\n\nconst chunks = [];\nlet start = 0;\n\nwhile (start < text.length) {\n  chunks.push({\n    content: text.slice(start, start + chunkSize),\n  });\n  start += chunkSize - overlap;\n}\n\nreturn chunks.map(c => ({ json: c }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        -208
+      ],
+      "id": "7fa49a14-075e-4f99-bf15-ac4843b38fc3",
+      "name": "Code in JavaScript(CHUCK TEXT)"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embed Chunks": {
+      "main": [
+        [
+          {
+            "node": "Save Vector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Embed Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed Question": {
+      "main": [
+        [
+          {
+            "node": "Search Vectors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Vectors": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Context": {
+      "main": [
+        [
+          {
+            "node": "LLM Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "SET \"TEXT\" VARIABLE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET \"TEXT\" VARIABLE": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript(CHUCK TEXT)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript(CHUCK TEXT)": {
+      "main": [
+        [
+          {
+            "node": "Embed Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "fa2a6900-f799-4d21-a2a9-4f724ed46dd4",
+  "meta": {
+    "instanceId": "44084b1f82b560f1147992b0436d0fcd6bd85199061b6a28ba06d42cc06ea5c8"
+  },
+  "id": "WlVL1HkCwmvtzu5z",
+  "tags": []
+}
