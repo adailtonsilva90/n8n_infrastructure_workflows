@@ -33,23 +33,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        720,
-        -208
+        688,
+        -96
       ],
       "id": "be49478c-1abc-4f90-9c8c-9c0f4c2658f3"
-    },
-    {
-      "parameters": {
-        "additionalFields": {}
-      },
-      "name": "Save Vector",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1,
-      "position": [
-        1024,
-        -224
-      ],
-      "id": "b6d35aca-9162-4c94-ade1-a3cd63e0938e"
     },
     {
       "parameters": {
@@ -92,7 +79,13 @@
         368,
         304
       ],
-      "id": "f219ebd5-c88d-48c4-922c-997c8fdafd9b"
+      "id": "f219ebd5-c88d-48c4-922c-997c8fdafd9b",
+      "credentials": {
+        "postgres": {
+          "id": "kXGR6vTXvvRbQoG1",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "parameters": {
@@ -187,12 +180,25 @@
     },
     {
       "parameters": {
+        "jsCode": "const text = $input.first().json.text;\n\nconst chunkSize = 800;\nconst overlap = 150;\n\nconst chunks = [];\nlet start = 0;\n\nwhile (start < text.length) {\n  chunks.push({\n    content: text.slice(start, start + chunkSize),\n  });\n  start += chunkSize - overlap;\n}\n\nreturn chunks.map(c => ({ json: c }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        -208
+      ],
+      "id": "7fa49a14-075e-4f99-bf15-ac4843b38fc3",
+      "name": "JavaScript(CHUCK TEXT)"
+    },
+    {
+      "parameters": {
         "assignments": {
           "assignments": [
             {
-              "id": "e6bd638c-66f7-4a9f-aeee-5689cd915cb1",
+              "id": "3197b0e1-c970-47ef-8ab2-78090b83d50f",
               "name": "text",
-              "value": "={{ $json.text }}",
+              "value": "={{$json.text.replace(/\\s+/g, ' ').trim()}}\n",
               "type": "string"
             }
           ]
@@ -206,20 +212,110 @@
         -208
       ],
       "id": "9e952534-8f7c-4ba3-be9a-47cbf267206a",
-      "name": "SET \"TEXT\" VARIABLE"
+      "name": "SET ADN NORMALIZE \"TEXT\" VARIABLE"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        864,
+        -272
+      ],
+      "id": "a30a935a-7d06-48f7-9280-66ad73c2b942",
+      "name": "Merge"
     },
     {
       "parameters": {
-        "jsCode": "const text = $input.first().json.text;\n\nconst chunkSize = 800;\nconst overlap = 150;\n\nconst chunks = [];\nlet start = 0;\n\nwhile (start < text.length) {\n  chunks.push({\n    content: text.slice(start, start + chunkSize),\n  });\n  start += chunkSize - overlap;\n}\n\nreturn chunks.map(c => ({ json: c }));\n"
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "={{ $json.content }}",
+            "embedding": "={{ $json.embedding }}",
+            "source": "\"manual\""
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "embedding",
+              "displayName": "embedding",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
       },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
       "position": [
-        512,
-        -208
+        1072,
+        -272
       ],
-      "id": "7fa49a14-075e-4f99-bf15-ac4843b38fc3",
-      "name": "Code in JavaScript(CHUCK TEXT)"
+      "id": "5e8a0aa0-dddf-4eb4-9a12-badd4f7e742c",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "kXGR6vTXvvRbQoG1",
+          "name": "Postgres account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -228,9 +324,9 @@
       "main": [
         [
           {
-            "node": "Save Vector",
+            "node": "Merge",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -294,33 +390,54 @@
       "main": [
         [
           {
-            "node": "SET \"TEXT\" VARIABLE",
+            "node": "SET ADN NORMALIZE \"TEXT\" VARIABLE",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "SET \"TEXT\" VARIABLE": {
-      "main": [
-        [
-          {
-            "node": "Code in JavaScript(CHUCK TEXT)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code in JavaScript(CHUCK TEXT)": {
+    "JavaScript(CHUCK TEXT)": {
       "main": [
         [
           {
             "node": "Embed Chunks",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
           }
         ]
+      ]
+    },
+    "SET ADN NORMALIZE \"TEXT\" VARIABLE": {
+      "main": [
+        [
+          {
+            "node": "JavaScript(CHUCK TEXT)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        []
       ]
     }
   },
@@ -330,8 +447,9 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "fa2a6900-f799-4d21-a2a9-4f724ed46dd4",
+  "versionId": "2873c66f-2e87-4704-8053-3949c9ced657",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "44084b1f82b560f1147992b0436d0fcd6bd85199061b6a28ba06d42cc06ea5c8"
   },
   "id": "WlVL1HkCwmvtzu5z",
