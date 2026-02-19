@@ -40,24 +40,31 @@
     },
     {
       "parameters": {
-        "path": "chat",
-        "options": {}
-      },
-      "name": "Chat Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [
-        -32,
-        304
-      ],
-      "id": "610f24b1-60c5-4228-ac3a-2122b3e1fae6",
-      "webhookId": "7cbe0275-755b-4d3d-aff6-ba4714e836ba"
-    },
-    {
-      "parameters": {
+        "requestMethod": "POST",
         "url": "http://ollama:11434/api/embeddings",
-        "jsonParameters": true,
-        "options": {}
+        "options": {
+          "bodyContentType": "json"
+        },
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "model",
+              "value": "nomic-embed-text"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.chatQuestion }}"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
       },
       "name": "Embed Question",
       "type": "n8n-nodes-base.httpRequest",
@@ -70,7 +77,11 @@
     },
     {
       "parameters": {
-        "additionalFields": {}
+        "operation": "executeQuery",
+        "query": "SELECT content, embedding <=> $1 AS distance\nFROM documents\nORDER BY distance\nLIMIT 5;\n",
+        "additionalFields": {
+          "queryParams": "={{ '[' + $json.embedding.join(',') + ']' }}"
+        }
       },
       "name": "Search Vectors",
       "type": "n8n-nodes-base.postgres",
@@ -118,13 +129,13 @@
     {
       "parameters": {
         "content": "TESTE CHAT",
-        "height": 464,
-        "width": 1232
+        "height": 240,
+        "width": 528
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -176,
+        -880,
         112
       ],
       "id": "2c922d27-a767-4e1e-a243-40d5fcc4d849",
@@ -132,8 +143,9 @@
     },
     {
       "parameters": {
-        "content": "RAG\n",
-        "height": 96,
+        "content": "RAG - PGVECTOR\n\n",
+        "height": 352,
+        "width": 1648,
         "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -305,26 +317,39 @@
           "name": "Postgres account"
         }
       }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -64,
+        304
+      ],
+      "id": "a2500dcf-ba95-46c5-b0c0-8dccbe79b8d2",
+      "name": "When chat message received",
+      "webhookId": "6fd50790-cdd1-48fe-84ac-2f49bf86fcd2"
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "When chat message received": [
+      {
+        "json": {
+          "sessionId": "077eec0252f641efab9d34f549b7f753",
+          "action": "sendMessage",
+          "chatQuestion": "quantos anos de experiencia total ele tem  na  act "
+        }
+      }
+    ]
+  },
   "connections": {
     "Embed Chunks": {
       "main": [
         [
           {
             "node": "Insert rows in a table",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Chat Webhook": {
-      "main": [
-        [
-          {
-            "node": "Embed Question",
             "type": "main",
             "index": 0
           }
@@ -412,6 +437,17 @@
       "main": [
         []
       ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Embed Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -420,7 +456,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "3d0e1ecd-8487-4a93-8d43-efc48a8f7018",
+  "versionId": "afd744e8-afe9-4ff3-ae65-137c3d15eb69",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "44084b1f82b560f1147992b0436d0fcd6bd85199061b6a28ba06d42cc06ea5c8"
