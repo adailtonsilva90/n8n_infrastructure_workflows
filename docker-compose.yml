@@ -36,10 +36,17 @@ services:
     entrypoint: >
       sh -c "
       ollama serve &
-      sleep 5 &&
-      ollama pull nomic-embed-text &&
+      echo '⏳ Waiting for Ollama...'
+      until curl -s http://localhost:11434/api/tags > /dev/null; do
+        sleep 1
+      done
+      echo '✅ Ollama is ready'
+      ollama pull nomic-embed-text
+      ollama pull llama3
+      ollama pull mistral
       wait
       "
+
 
   n8n:
     image: n8nio/n8n:latest
