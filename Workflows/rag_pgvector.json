@@ -1,5 +1,5 @@
 {
-  "name": "RAG-1",
+  "name": "rag_pgvector",
   "nodes": [
     {
       "parameters": {
@@ -33,8 +33,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        688,
-        -96
+        752,
+        -208
       ],
       "id": "be49478c-1abc-4f90-9c8c-9c0f4c2658f3"
     },
@@ -215,17 +215,6 @@
       "name": "SET ADN NORMALIZE \"TEXT\" VARIABLE"
     },
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        864,
-        -272
-      ],
-      "id": "a30a935a-7d06-48f7-9280-66ad73c2b942",
-      "name": "Merge"
-    },
-    {
       "parameters": {
         "schema": {
           "__rl": true,
@@ -241,7 +230,7 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "content": "={{ $json.content }}",
+            "content": "={{ $('JavaScript(CHUCK TEXT)').item.json.content }}",
             "embedding": "={{ $json.embedding }}",
             "source": "\"manual\""
           },
@@ -305,8 +294,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1072,
-        -272
+        976,
+        -208
       ],
       "id": "5e8a0aa0-dddf-4eb4-9a12-badd4f7e742c",
       "name": "Insert rows in a table",
@@ -324,9 +313,9 @@
       "main": [
         [
           {
-            "node": "Merge",
+            "node": "Insert rows in a table",
             "type": "main",
-            "index": 1
+            "index": 0
           }
         ]
       ]
@@ -404,11 +393,6 @@
             "node": "Embed Chunks",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Merge",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -418,17 +402,6 @@
         [
           {
             "node": "JavaScript(CHUCK TEXT)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge": {
-      "main": [
-        [
-          {
-            "node": "Insert rows in a table",
             "type": "main",
             "index": 0
           }
@@ -447,7 +420,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "2873c66f-2e87-4704-8053-3949c9ced657",
+  "versionId": "3d0e1ecd-8487-4a93-8d43-efc48a8f7018",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "44084b1f82b560f1147992b0436d0fcd6bd85199061b6a28ba06d42cc06ea5c8"
