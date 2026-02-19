@@ -100,7 +100,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const context = items.map(i => i.json.content).join(\"\\n\\n\");\nreturn [{ json: { context, question: $node[\"Chat Webhook\"].json.question } }];"
+        "functionCode": "const docs = items.map(item => item.json.content);\n\nreturn [{\n  json: {\n    context: docs.join('\\n\\n---\\n\\n')\n  }\n}];\n"
       },
       "name": "Build Context",
       "type": "n8n-nodes-base.function",
@@ -110,21 +110,6 @@
         304
       ],
       "id": "17e37e6d-430e-449e-87a8-1601273d9ee9"
-    },
-    {
-      "parameters": {
-        "url": "http://ollama:11434/api/generate",
-        "jsonParameters": true,
-        "options": {}
-      },
-      "name": "LLM Answer",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 2,
-      "position": [
-        768,
-        304
-      ],
-      "id": "30c904e6-8c5c-4db8-8675-cb8bf02925fb"
     },
     {
       "parameters": {
@@ -331,19 +316,73 @@
       "id": "a2500dcf-ba95-46c5-b0c0-8dccbe79b8d2",
       "name": "When chat message received",
       "webhookId": "6fd50790-cdd1-48fe-84ac-2f49bf86fcd2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2ef56353-ec3b-4900-8dcb-64c9c453a816",
+              "name": "promptChat",
+              "value": "=Você é um assistente especializado.\n\nUse o CONTEXTO abaixo para responder à PERGUNTA.\nSe o contexto tiver informações relevantes, responda de forma objetiva.\nSe não houver relação clara, diga exatamente:\n\"Não encontrei essa informação no contexto fornecido.\"\n\nCONTEXTO:\n{{ $json.context }}\n\nPERGUNTA:\n{{ $node[\"When chat message received\"].json.chatInput }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        784,
+        304
+      ],
+      "id": "5a38dc74-74fd-4d08-96c4-0145c39f9cc8",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/generate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "llama3"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.promptChat }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        992,
+        304
+      ],
+      "id": "e95e1e8d-1e07-4c38-b785-bd01ac84b26a",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.data;\n\n// Garantia\nif (typeof raw !== 'string') {\n  return [{ json: { answer: raw?.response ?? '' } }];\n}\n\n// Quebra por linha\nconst lines = raw.split('\\n').filter(l => l.trim());\n\n// Junta todas as respostas\nlet fullAnswer = '';\n\nfor (const line of lines) {\n  try {\n    const obj = JSON.parse(line);\n    if (obj.response) {\n      fullAnswer += obj.response;\n    }\n  } catch (e) {\n    // ignora linhas inválidas\n  }\n}\n\nreturn [\n  {\n    json: {\n      answer: fullAnswer.trim()\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        304
+      ],
+      "id": "3cafde57-b435-48e5-b3a1-544962728270",
+      "name": "Code in JavaScript"
     }
   ],
-  "pinData": {
-    "When chat message received": [
-      {
-        "json": {
-          "sessionId": "077eec0252f641efab9d34f549b7f753",
-          "action": "sendMessage",
-          "chatQuestion": "quantos anos de experiencia total ele tem  na  act "
-        }
-      }
-    ]
-  },
+  "pinData": {},
   "connections": {
     "Embed Chunks": {
       "main": [
@@ -382,7 +421,7 @@
       "main": [
         [
           {
-            "node": "LLM Answer",
+            "node": "Edit Fields",
             "type": "main",
             "index": 0
           }
@@ -448,6 +487,28 @@
           }
         ]
       ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -456,7 +517,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "afd744e8-afe9-4ff3-ae65-137c3d15eb69",
+  "versionId": "61be8764-5bfc-4996-a5fb-0b271db5f4f0",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "44084b1f82b560f1147992b0436d0fcd6bd85199061b6a28ba06d42cc06ea5c8"
