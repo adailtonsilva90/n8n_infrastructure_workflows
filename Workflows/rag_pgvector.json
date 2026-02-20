@@ -33,7 +33,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        752,
+        592,
         -208
       ],
       "id": "be49478c-1abc-4f90-9c8c-9c0f4c2658f3"
@@ -53,7 +53,7 @@
             },
             {
               "name": "prompt",
-              "value": "={{ $json.chatQuestion }}"
+              "value": "={{ $json.chatInput }}"
             }
           ]
         },
@@ -70,15 +70,15 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        176,
-        304
+        144,
+        240
       ],
       "id": "bc83cd6a-c670-41e3-ad64-349ed60b2da9"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT content, embedding <=> $1 AS distance\nFROM documents\nORDER BY distance\nLIMIT 5;\n",
+        "query": "SELECT content\nFROM documents\nORDER BY embedding <=> $1\nLIMIT 7;\n",
         "additionalFields": {
           "queryParams": "={{ '[' + $json.embedding.join(',') + ']' }}"
         }
@@ -88,7 +88,7 @@
       "typeVersion": 1,
       "position": [
         368,
-        304
+        240
       ],
       "id": "f219ebd5-c88d-48c4-922c-997c8fdafd9b",
       "credentials": {
@@ -106,22 +106,22 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        576,
-        304
+        592,
+        240
       ],
       "id": "17e37e6d-430e-449e-87a8-1601273d9ee9"
     },
     {
       "parameters": {
         "content": "TESTE CHAT",
-        "height": 240,
-        "width": 528
+        "height": 368,
+        "width": 2016
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -880,
-        112
+        -448,
+        96
       ],
       "id": "2c922d27-a767-4e1e-a243-40d5fcc4d849",
       "name": "Sticky Note1"
@@ -136,8 +136,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -368,
-        -304
+        -408,
+        -400
       ],
       "id": "8c208483-6d47-4b28-b2e1-312811fbbfe2",
       "name": "Sticky Note"
@@ -169,7 +169,7 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1.1,
       "position": [
-        128,
+        144,
         -208
       ],
       "id": "33a76b3d-e4f1-4eef-9608-b10fb920e444",
@@ -177,39 +177,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = $input.first().json.text;\n\nconst chunkSize = 800;\nconst overlap = 150;\n\nconst chunks = [];\nlet start = 0;\n\nwhile (start < text.length) {\n  chunks.push({\n    content: text.slice(start, start + chunkSize),\n  });\n  start += chunkSize - overlap;\n}\n\nreturn chunks.map(c => ({ json: c }));\n"
+        "jsCode": "const text = $input.first().json.text;\n\n// possíveis títulos do currículo\nconst sectionRegex = /(Adailton Nascimento de Oliveira Silva|Experiência|ACT Digital|META - Analista|HVAR Consulting|Cursos|3AM IT Services|Solutis Tecnologia|Certificações|Projetos|Habilidades|Resumo)/gi;\n\nconst parts = text.split(sectionRegex);\n\nconst chunks = [];\n\nfor (let i = 1; i < parts.length; i += 2) {\n  const title = parts[i].trim();\n  let content = parts[i + 1]?.trim();\n  \n  if (content) {\n    chunks.push({\n      content: `${title}\\n${content}`\n    });\n  }\n}\n\nreturn chunks.map(c => ({ json: c }));\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        512,
+        368,
         -208
       ],
       "id": "7fa49a14-075e-4f99-bf15-ac4843b38fc3",
       "name": "JavaScript(CHUCK TEXT)"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "3197b0e1-c970-47ef-8ab2-78090b83d50f",
-              "name": "text",
-              "value": "={{$json.text.replace(/\\s+/g, ' ').trim()}}\n",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        304,
-        -208
-      ],
-      "id": "9e952534-8f7c-4ba3-be9a-47cbf267206a",
-      "name": "SET ADN NORMALIZE \"TEXT\" VARIABLE"
     },
     {
       "parameters": {
@@ -291,7 +268,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        976,
+        816,
         -208
       ],
       "id": "5e8a0aa0-dddf-4eb4-9a12-badd4f7e742c",
@@ -310,8 +287,8 @@
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.4,
       "position": [
-        -64,
-        304
+        -80,
+        240
       ],
       "id": "a2500dcf-ba95-46c5-b0c0-8dccbe79b8d2",
       "name": "When chat message received",
@@ -324,7 +301,7 @@
             {
               "id": "2ef56353-ec3b-4900-8dcb-64c9c453a816",
               "name": "promptChat",
-              "value": "=Você é um assistente especializado.\n\nUse o CONTEXTO abaixo para responder à PERGUNTA.\nSe o contexto tiver informações relevantes, responda de forma objetiva.\nSe não houver relação clara, diga exatamente:\n\"Não encontrei essa informação no contexto fornecido.\"\n\nCONTEXTO:\n{{ $json.context }}\n\nPERGUNTA:\n{{ $node[\"When chat message received\"].json.chatInput }}\n",
+              "value": "=Você é um assistente especializado em rh que analisa curriculos, para entender habilidades baseados nas experiencias profissionais, cursos e dados pessoais.\n\nUse o CONTEXTO abaixo para responder à PERGUNTA.\nSe o contexto tiver informações relevantes, responda de forma objetiva.\nSe não houver relação clara, diga exatamente:\n\"Não encontrei essa informação no contexto fornecido.\"\n\nCONTEXTO:\n{{ $json.context }}\n\nPERGUNTA:\n{{ $node[\"When chat message received\"].json.chatInput }}\n",
               "type": "string"
             }
           ]
@@ -334,55 +311,74 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        784,
-        304
+        816,
+        240
       ],
       "id": "5a38dc74-74fd-4d08-96c4-0145c39f9cc8",
       "name": "Edit Fields"
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://ollama:11434/api/generate",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
             {
-              "name": "model",
-              "value": "llama3"
-            },
-            {
-              "name": "prompt",
-              "value": "={{ $json.promptChat }}"
+              "content": "={{ $json.promptChat }}"
             }
           ]
         },
+        "builtInTools": {},
         "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
       "position": [
-        992,
-        304
+        1040,
+        240
       ],
-      "id": "e95e1e8d-1e07-4c38-b785-bd01ac84b26a",
-      "name": "HTTP Request"
-    },
-    {
-      "parameters": {
-        "jsCode": "const raw = $input.first().json.data;\n\n// Garantia\nif (typeof raw !== 'string') {\n  return [{ json: { answer: raw?.response ?? '' } }];\n}\n\n// Quebra por linha\nconst lines = raw.split('\\n').filter(l => l.trim());\n\n// Junta todas as respostas\nlet fullAnswer = '';\n\nfor (const line of lines) {\n  try {\n    const obj = JSON.parse(line);\n    if (obj.response) {\n      fullAnswer += obj.response;\n    }\n  } catch (e) {\n    // ignora linhas inválidas\n  }\n}\n\nreturn [\n  {\n    json: {\n      answer: fullAnswer.trim()\n    }\n  }\n];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1200,
-        304
-      ],
-      "id": "3cafde57-b435-48e5-b3a1-544962728270",
-      "name": "Code in JavaScript"
+      "id": "b1e648d0-4b8d-4600-9601-045ac9302982",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9ANdUB3d9bTTLSsf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Extract from File": [
+      {
+        "json": {
+          "numpages": 6,
+          "numrender": 6,
+          "info": {
+            "PDFFormatVersion": "1.4",
+            "Language": "pt_BR",
+            "EncryptFilterName": null,
+            "IsLinearized": false,
+            "IsAcroFormPresent": false,
+            "IsXFAPresent": false,
+            "IsCollectionPresent": false,
+            "IsSignaturesPresent": false,
+            "Title": "RPA - Currículo Adailton Silva 22/12/2025",
+            "Producer": "Skia/PDF m145 Google Docs Renderer"
+          },
+          "text": "Adailton Nascimento de Oliveira Silva\nContatos : +55 71 99715-3776 (whatsapp)\nEmail: adailton.silva10@live.com\nLinkedin: www.linkedin.com/in/adailtonsilva90/\nGithub: https://github.com/adailtonsilva90\nFormação\nMBA, Business Intelligence com Ênfase em Big Data\nCentro Universitário UniRuy (Concluído em 2020).\nAnálise e Desenvolvimento de Sistemas\nCentro Universitário Jorge Amado (Concluído em 2018).\nExperiência\nACT Digital - Desenvolvedor RPA III (9 meses)\nSquad de Automações – Operações\nCliente: O Boticário\n● Responsável pela sustentação e manutenção de robôs RPA, assegurando\nestabilidade, correção de bugs e adaptação contínua a mudanças nos processos de\nnegócio.\n● Participação ativa em comitês de melhoria contínua, identificando oportunidades de\nevolução com base em tendências de mercado e boas práticas de automação.\n● Colaboração em debates técnicos sobre viabilidade e desenho de novos processos\nautomatizados.\n● Definição e discussão de arquiteturas de automações, com foco em escalabilidade e\nmanutenção.\nDestaques técnicos:\n● Proposição de arquitetura baseada em GenAI (Google Gemini) para classificação e\nextração inteligente de dados em documentos.\n● Integração entre GenAI e UiPath, ampliando as capacidades cognitivas das\nautomações.\n● Desenvolvimento de solução dinâmica e escalável, capaz de se adaptar a múltiplos\ntipos de documentos sem necessidade de ajustes no código.\n● Estrutura projetada para facilitar a inclusão de novos templates e classes de\ndocumentos, otimizando a manutenção e reduzindo o time-to-market.\n\n● Aplicação de engenharia de prompt para aprimorar a qualidade e precisão dos\nresultados obtidos por IA generativa.\nMETA - Analista RPA III (6 meses)\nMeta Hub – Automação, Dados e IA\nCliente: Gerdau (BPO)\n● Responsável pela análise de viabilidade técnica dos processos mapeados e pela\ndefinição e criação de arquiteturas de soluções voltadas à automação e inteligência\nartificial.\nBPO Gerdau – Cadastro BP\n● Desenvolvimento de uma API de Inteligência Artificial para classificação e extração\nde campos em documentos escaneados.\n● Implementação de extração de texto em múltiplos tipos e templates de imagens\nutilizando Azure AI Document Intelligence.\n● Integração com LLMs via LangChain, aplicando engenharia de prompt para\notimização das instruções e melhoria da acurácia dos resultados.\n● Classificação automática de tipos de documentos com base no conteúdo textual e\nextração de campos específicos conforme o tipo.\n● Treinamento de rede neural (YOLO) para detecção de assinaturas manuais em\ndocumentos.\n● Uso do LangGraph para encadear e orquestrar as etapas de processamento.\nBPO Gerdau – Suprimentos\n● Desenvolvimento de automação com Selenium para operações de extração e\ntransformação de dados (ETL).\n● Extração de dados semi-estruturados do SAP Web, seguida de transformação e\ngeração de relatórios analíticos.\n● Upload automatizado dos resultados no SharePoint, facilitando o acesso e a análise\npara as áreas de negócio.\n\nHVAR Consulting - Engenheiro Automação ||| - Especialista em Tecnologia (2 anos 2\nmeses)\nAtuação no Cliente Whirlpool – Setor Logístico (Order to Cash)\nCOE RPA – Desbloqueio de Ordens\n● Realização de entrevistas com analistas de negócio para entendimento do processo\ne definição de requisitos.\n● Elaboração de documentação técnica (PDD e SDD) e criação da arquitetura da\nsolução.\n● Desenvolvimento da automação em UiPath, com foco em eficiência e confiabilidade\noperacional.\nDestaques técnicos:\n● Extração de relatórios semi-estruturados em transações do SAP.\n● Limpeza e transformação de dados conforme regras de negócio.\n● Carga dos arquivos transformados em novas transações SAP.\n● Upload automatizado dos relatórios para o Google Drive, fornecendo arquivos mais\nintuitivos para análise das áreas de negócio.\n● Envio automatizado de relatórios de execução para acompanhamento da equipe\ntécnica.\nAtuação no Cliente Suzano – COE RPA (Invoices Administrativas)\n● Entrevistas com analistas para mapeamento e compreensão dos processos.\n● Documentação completa (PDD e SDD) e desenho da arquitetura da solução.\n● Desenvolvimento da automação em UiPath com múltiplas integrações e controle\ntransacional.\nDestaques técnicos:\n● Extração de arquivos PDF (imagens escaneadas) recebidos por e-mail.\n● Leitura via OCR e classificação automática de documentos com Document\nUnderstanding.\n● Validação de dados no Action Center, garantindo acurácia antes da carga.\n● Armazenamento de arquivos no Cloud Storage (GCP).\n● Criação e gestão de base de dados no BigQuery (GCP) para controle do estado das\ntransações executadas no UiPath.\n● Limpeza, transformação e carga de dados com base nas regras de negócio.\n● Execução de queries analíticas no BigQuery e integração com transações SAP.\n● Geração automatizada de relatórios e indicadores para análise técnica e de negócio.\n● Gerenciamento e monitoramento de ativos de automação via UiPath Orchestrator.\n\nACT Digital - Analista de Desenvolvimento de Sistemas Sênior (9 meses)\nAtuação no cliente Sicoob (Centro de Inteligência Artificial): Setores RH, Contabilidade e etc\nSetores: RH, Contabilidade e demais áreas corporativas\n● Sustentação e monitoramento das automações existentes, garantindo estabilidade\noperacional.\n● Análise de performance das automações, identificando oportunidades de otimização\ne melhorias nas arquiteturas de solução.\n● Desenvolvimento de novas automações utilizando UiPath e Automation Anywhere\n(v11 e A2019), com foco em confiabilidade e eficiência.\nDestaques técnicos:\n● Manipulação avançada de planilhas Excel para tratamento de dados e integração\ncom sistemas legados.\n● Validação e tratamento de erros garantindo execução segura e resiliente.\n● Execução de queries e cargas de dados em bancos de dados DB2 e SQL Server.\n● Gerenciamento e monitoramento de ativos de automação via UiPath Orchestrator.\n3AM IT Services - Analista de Desenvolvimento de Sistemas Sênior (6 meses)\nAtuação no Cliente Claro (Global Hitss) – COE RPA Tributário\n● Sustentação e monitoramento das automações existentes, garantindo estabilidade e\ncontinuidade operacional.\n● Análise de performance das automações para identificação de oportunidades de\nmelhoria nas arquiteturas das soluções.\n● Gerenciamento e monitoramento de ativos de automação através do Control Room.\n● Desenvolvimento de automações utilizando Automation Anywhere (v11), com foco\nem confiabilidade e integração de dados.\nDestaques técnicos:\n● Extração e tratamento de dados em planilhas Excel para importação em banco de\ndados Oracle.\n● Envio automatizado de relatórios por e-mail para acompanhamento das áreas de\nnegócio.\n● Validação e tratamento de erros, assegurando a execução estável e controlada dos\nprocessos.\nSolutis Tecnologia - Analista Desenvolvedor (3 anos 2 meses)\n\nAtuação no Time CDO-RPA\nClientes: TJBA, SEC-BA, SEBRAE e setores internos\n● Desenvolvimento de automações utilizando UiPath e Automation Anywhere (A2019),\ncom foco em performance e escalabilidade.\n● Manutenção e monitoramento contínuo das automações, garantindo estabilidade e\nmelhorias constantes.\n● Gerenciamento e controle de credenciais via Control Room e Orquestrador.\n● Deploy de automações em ambiente Microsoft Azure.\nDestaques técnicos:\n● Manipulação de planilhas Excel e arquivos CSV, com integração a scripts Python\npara ganho de performance.\n● Integração com ferramentas de chamados como GLPI, CA e Remend.\n● Automação de lançamentos de notas fiscais no TOTVS.\n● Envio automatizado de relatórios por e-mail.\n● Gerenciamento e monitoramento de ativos de automação via Control Room e/ou\nOrquestrador.\nAtuação na Célula de DevOps – Setor de Gestão de Infraestrutura\n● Manipulação e administração de containers utilizando Docker e Kubernetes.\n● Implementação de pipelines CI/CD com Jenkins, integrando automações e APIs.\n● Gerenciamento de aplicações PaaS hospedadas em nuvens públicas (AWS e GCP).\n● Manutenções evolutivas em APIs desenvolvidas em Node.js.\nProjetos\nRank FIIs - Airflow\nEste projeto tem como objetivo extrair e processar dados de uma tabela em um site que\ncontém um ranking de Fundos Imobiliários. Após a transformação, os dados serão utilizados\npara criar uma Google Sheet em um repositório no Google Drive, após passar por etapas de\nETL utilizando o Airflow(Link do repositório :\nhttps://github.com/adailtonsilva90/airflow_rank_fiis).\n● Criação de infraestrutura como código usando docker-compose(imagens: Apache\nAirflow, selenium, redis, postgres)\n● Criação de DAG, Tasks e funções Python usando Airflow\n○ Download dos dados carregados da página como arquivo HTML\n○ Fazer uma varredura no arquivo para encontrar a estrutura da tabela\n○ Carregar os dados da tabela como um DataFrame no Pandas\n○ Fazer autenticação no Google Drive através de conta de serviço\n○ Carregar os dados em uma pasta do Google Drive como Google Sheets\n\nRank FIIs - Power BI\nEste projeto tem como objetivo extrair e processar dados de uma tabela em um site que\ncontém um ranking de Fundos Imobiliários para gerar visualizações analíticas através do\nPower BI\n● Obter tabela do site\n● Limpar dados não válidos(N/A, null, 0)\n● Transformações de tipos de dados\n● Deletar colunas desnecessárias\n● Criação de colunas com novas medidas\n● Criação de filtros baseados em regras negócios\n● Criação de dashboards\nIdioma\n● Inglês - intermédio\n● Português - Fluente (nativo)\nCertificações\n● Automation Anywhere Certified Advanced RPA Professional (A2019) - 2020\n● RPA Developer - Level 1 - Foundation Training - 2018.3 (UiPath) - 2019\n● AWS Technical Professional (AWS traning) - 2019\nCursos\n● SUPER Data Factory, Databricks e Databricks Delta Lake (Udemy)\n● Domine Apache Airflow: Pipelines de Engenharia de Dados (Udemy)\n● Docker: Ferramenta essencial para Desenvolvedores (Udemy)\n● Curso Completo do Desenvolvedor NodeJS e MongoDB (Udemy)\n● Machine Learning: Introdução a algoritmos não supervisionados (Alura)\n● Redes Neurais Artificiais em Python (Udemy)\n● Python Pandas: Tratando e analisando dados (Alura)\n● Python Fundamentos para Análise de Dados (Data Science Academy)\n● Microsoft Power BI para Data Science (Data Science Academy)\n● Planejamento e Gestão de Projetos (Udemy)\n● Dialogflow Completo-Domine a Criação de Assistentes Virtuais (Udemy)\n● Microsoft Power Automate Desktop - RPA para Iniciantes (Udemy)",
+          "version": "5.3.31"
+        },
+        "binary": {},
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
   "connections": {
     "Embed Chunks": {
       "main": [
@@ -443,7 +439,7 @@
       "main": [
         [
           {
-            "node": "SET ADN NORMALIZE \"TEXT\" VARIABLE",
+            "node": "JavaScript(CHUCK TEXT)",
             "type": "main",
             "index": 0
           }
@@ -455,17 +451,6 @@
         [
           {
             "node": "Embed Chunks",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "SET ADN NORMALIZE \"TEXT\" VARIABLE": {
-      "main": [
-        [
-          {
-            "node": "JavaScript(CHUCK TEXT)",
             "type": "main",
             "index": 0
           }
@@ -492,22 +477,16 @@
       "main": [
         [
           {
-            "node": "HTTP Request",
+            "node": "Message a model",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP Request": {
+    "Message a model": {
       "main": [
-        [
-          {
-            "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     }
   },
@@ -517,7 +496,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "61be8764-5bfc-4996-a5fb-0b271db5f4f0",
+  "versionId": "a7a4b557-c834-4a8b-9820-ed370a0c60d1",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "44084b1f82b560f1147992b0436d0fcd6bd85199061b6a28ba06d42cc06ea5c8"
