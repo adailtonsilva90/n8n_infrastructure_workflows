@@ -3,7 +3,7 @@ version: "3.8"
 services:
   postgres:
     image: ankane/pgvector:latest
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -15,7 +15,7 @@ services:
   
   pgadmin:
     image: dpage/pgadmin4:latest
-    restart: always
+    restart: unless-stopped
     ports:
       - "5050:80"
     environment:
@@ -28,29 +28,34 @@ services:
 
   ollama:
     image: ollama/ollama:latest
-    restart: always
+    restart: unless-stopped
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-    entrypoint: >
-      sh -c "
-      ollama serve &
-      echo '⏳ Waiting for Ollama...'
-      until curl -s http://localhost:11434/api/tags > /dev/null; do
-        sleep 1
-      done
-      echo '✅ Ollama is ready'
-      ollama pull nomic-embed-text
-      ollama pull llama3
-      ollama pull mistral
-      wait
-      "
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        ollama serve &
 
+        echo "Waiting for Ollama..."
+
+        until curl -s http://localhost:11434/api/tags > /dev/null; do
+          sleep 1
+        done
+
+        echo "Ollama is ready"
+
+        ollama pull nomic-embed-text
+        ollama pull llama3
+        ollama pull mistral
+
+        wait
 
   n8n:
     image: n8nio/n8n:latest
-    restart: always
+    restart: unless-stopped
     ports:
       - "5678:5678"
     environment:
